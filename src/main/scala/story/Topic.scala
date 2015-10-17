@@ -1,0 +1,5 @@
+package story
+
+class Topic {
+
+}
