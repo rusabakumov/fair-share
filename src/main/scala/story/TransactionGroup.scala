@@ -6,6 +6,6 @@ case class TransactionId(id: Int) extends AnyVal
 
 case class TransactionGroup(
   id: TransactionId,
-  topicId: TopicId,
+  eventId: EventId,
   transactions: Map[CharacterId, Transaction]
 )
