@@ -1,5 +1,4 @@
 package story
 
-class Character {
-
-}
+case class CharacterId(id: Int) extends AnyVal
+case class Character(id: CharacterId, name: String)

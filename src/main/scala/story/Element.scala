@@ -1,5 +1,0 @@
-package story
-
-class Element {
-
-}
