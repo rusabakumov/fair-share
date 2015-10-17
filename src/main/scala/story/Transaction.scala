@@ -1,8 +1,6 @@
 package story
 
-import ledger.{Money, Entry}
-import ledger.Record._
-import ledger.Account._
+import ledger.{Entry, Money}
 
 case class Transaction(details: Map[CharacterId, Entry])
 
