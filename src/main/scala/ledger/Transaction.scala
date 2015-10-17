@@ -1,3 +1,3 @@
 package ledger
 
-case class Transaction(entries: List[Record])
+case class Transaction(records: List[Record])
