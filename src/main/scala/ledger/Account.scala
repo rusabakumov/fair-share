@@ -1,26 +1,14 @@
 package ledger
 
 import ledger.operations.BasicAccountOperations
-import ledger.tagging.{AccountSide, AccountLabel}
+import ledger.tagging._
 
 sealed trait Account extends Product with Serializable {
-  self =>
   def debitBalance: Money
   def creditBalance: Money
-
-  def balance(implicit as: AccountSide[self.type]) = as.side match {
-    case Debit => debitBalance - creditBalance
-    case Credit => creditBalance - debitBalance
-  }
 }
 
-trait DebitAccount extends Account
-
-object DebitAccount {
-  implicit val debitAccount: AccountSide[DebitAccount] = AccountSide(Debit)
-}
-
-case class CashAccount(debitBalance: Money, creditBalance: Money) extends DebitAccount
+case class CashAccount(debitBalance: Money, creditBalance: Money) extends Account
 
 object CashAccount {
   implicit val basicOperations: BasicAccountOperations[CashAccount] = BasicAccountOperations(
@@ -31,7 +19,7 @@ object CashAccount {
   implicit val label: AccountLabel[CashAccount] = AccountLabel(Cash)
 }
 
-case class ReceivableAccount(debitBalance: Money, creditBalance: Money) extends DebitAccount
+case class ReceivableAccount(debitBalance: Money, creditBalance: Money) extends Account
 
 object ReceivableAccount {
   implicit val basicOperations: BasicAccountOperations[ReceivableAccount] = BasicAccountOperations(
@@ -42,7 +30,7 @@ object ReceivableAccount {
   implicit val label: AccountLabel[ReceivableAccount] = AccountLabel(Receivable)
 }
 
-case class GoodsAccount(debitBalance: Money, creditBalance: Money) extends DebitAccount
+case class GoodsAccount(debitBalance: Money, creditBalance: Money) extends Account
 
 object GoodsAccount {
   implicit val basicOperations: BasicAccountOperations[GoodsAccount] = BasicAccountOperations(
@@ -53,13 +41,7 @@ object GoodsAccount {
   implicit val label: AccountLabel[GoodsAccount] = AccountLabel(Goods)
 }
 
-trait CreditAccount extends Account
-
-object CreditAccount {
-  implicit val creditAccount: AccountSide[CreditAccount] = AccountSide(Credit)
-}
-
-case class PayableAccount(debitBalance: Money, creditBalance: Money) extends CreditAccount
+case class PayableAccount(debitBalance: Money, creditBalance: Money) extends Account
 
 object PayableAccount {
   implicit val basicOperations: BasicAccountOperations[PayableAccount] = BasicAccountOperations(

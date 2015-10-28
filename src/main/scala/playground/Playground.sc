@@ -1,26 +1,27 @@
-import ledger.operations.{AccountOperations, RecordableAccountOperations}
 import ledger._
+import ledger.operations.SuperAccountOperations
 
-val a = CashAccount(0, 0)
-val p = PayableAccount(0, 0)
+val sa = SuperAccount.empty
 
-RecordableAccountOperations.debit(a)(7)
-RecordableAccountOperations.increase(p)(10)
+// Let's construct a state transition
+val tr = for {
+  b <- SuperAccount.borrow(50)
+  l <- SuperAccount.lend(10)
+} yield b ::: l
 
-val superA = SuperAccount(
-  CashAccount(0, 0),
-  ReceivableAccount(0, 0),
-  PayableAccount(0, 0),
-  GoodsAccount(0, 0)
+// This is just a description of transition, in order to change account state we need to
+// actually apply the monad
+tr(sa)
+
+// Here we're getting all the change records, converts them into state monads,
+// and combines them
+val sc = tr(sa)._2.map(a => SuperAccountOperations.op(a.side, a.label, a.amount)).reduce(
+  (s1, s2) => for {
+    r1 <- s1
+    r2 <- s2
+  } yield r1 ::: r2
 )
 
-val manip = for {
-  l <- SuperAccount.lend(50)
-  p <- SuperAccount.receive(40)
-} yield l ::: p
-
-val (manipedSuperA, _) = manip(superA)
-
-manipedSuperA.cash.balance
-manipedSuperA.receivable.balance
-manipedSuperA.payable.balance
+// Here we're applying the new state monad to the account and results match with our
+// manually constructed state monad `tr`.
+sc(sa)

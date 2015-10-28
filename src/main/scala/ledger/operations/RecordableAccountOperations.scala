@@ -1,31 +1,23 @@
 package ledger.operations
 
 import ledger._
-import ledger.tagging.{AccountSide, AccountLabel}
+import ledger.tagging.{Credit, Debit, Side, AccountLabel}
 
 object RecordableAccountOperations {
-  def debit[T](account: T)(amount: Money)
-    (implicit bao: BasicAccountOperations[T], as: AccountSide[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
-    (AccountChangeRecord(Debit, al.label, amount), AccountOperations.debit(account)(amount))
-  }
+  def debit[T <: Account](account: T, amount: Money)
+    (implicit bao: BasicAccountOperations[T], al: AccountLabel[T]): (AccountChangeRecord, T) = op(Debit, account, amount)
 
-  def credit[T](account: T)(amount: Money)
-    (implicit bao: BasicAccountOperations[T], as: AccountSide[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
-    (AccountChangeRecord(Credit, al.label, amount), AccountOperations.credit(account)(amount))
-  }
+  def credit[T <: Account](account: T, amount: Money)
+    (implicit bao: BasicAccountOperations[T], al: AccountLabel[T]): (AccountChangeRecord, T) = op(Credit, account, amount)
 
-  def op[T](side: Side)(account: T)(amount: Money)
-    (implicit bao: BasicAccountOperations[T], as: AccountSide[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
-    (AccountChangeRecord(side, al.label, amount), AccountOperations.op(side)(account)(amount))
-  }
+  def increase[T <: Account](account: T, amount: Money)
+    (implicit bao: BasicAccountOperations[T], al: AccountLabel[T]): (AccountChangeRecord, T) = op(al.label.naturalSide, account, amount)
 
-  def increase[T](account: T)(amount: Money)
-    (implicit bao: BasicAccountOperations[T], as: AccountSide[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
-    (AccountChangeRecord(as.side, al.label, amount), AccountOperations.increase(account)(amount))
-  }
+  def decrease[T <: Account](account: T, amount: Money)
+    (implicit bao: BasicAccountOperations[T], al: AccountLabel[T]): (AccountChangeRecord, T) = op(al.label.naturalContraSide, account, amount)
 
-  def decrease[T](account: T)(amount: Money)
-    (implicit bao: BasicAccountOperations[T], as: AccountSide[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
-    (AccountChangeRecord(as.contraSide, al.label, amount), AccountOperations.decrease(account)(amount))
+  def op[T <: Account](side: Side, account: T, amount: Money)
+    (implicit bao: BasicAccountOperations[T], al: AccountLabel[T]): (AccountChangeRecord, T) = {
+    (AccountChangeRecord(side, al.label, amount), AccountOperations.op(side, account, amount))
   }
 }

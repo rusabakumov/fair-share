@@ -1,5 +1,7 @@
 package ledger
 
+import ledger.tagging.{Payable, Receivable, Cash}
+
 import scalaz.State
 
 case class SuperAccount(
@@ -9,28 +11,33 @@ case class SuperAccount(
   goods: GoodsAccount)
 
 object SuperAccount {
-  import ledger.operations.SuperAccountStateControl._
+  import ledger.operations.SuperAccountOperations._
 
-  type Transition = State[SuperAccount, List[AccountChangeRecord]]
+  def empty: SuperAccount = SuperAccount(
+    CashAccount(0, 0),
+    ReceivableAccount(0, 0),
+    PayableAccount(0, 0),
+    GoodsAccount(0, 0))
 
-  def lend(amount: Money): Transition = for {
+
+  def lend(amount: Money): SuperAccountRecordedOperation = for {
     rr <- increase(Receivable, amount)
     cr <- decrease(Cash, amount)
-  } yield rr :: cr :: Nil
+  } yield rr ::: cr
 
-  def borrow(amount: Money): Transition = for {
+  def borrow(amount: Money): SuperAccountRecordedOperation = for {
     cr <- increase(Cash, amount)
     pr <- increase(Payable, amount)
-  } yield cr :: pr :: Nil
+  } yield cr ::: pr
 
-  def payback(amount: Money): Transition = for {
+  def payback(amount: Money): SuperAccountRecordedOperation = for {
     pr <- decrease(Payable, amount)
     cr <- decrease(Cash, amount)
-  } yield pr :: cr :: Nil
+  } yield pr ::: cr
 
 
-  def receive(amount: Money): Transition = for {
+  def receive(amount: Money): SuperAccountRecordedOperation = for {
     cr <- increase(Cash, amount)
     rr <- decrease(Receivable, amount)
-  } yield cr :: rr :: Nil
+  } yield cr ::: rr
 }

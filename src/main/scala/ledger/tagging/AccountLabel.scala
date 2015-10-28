@@ -1,9 +1,9 @@
 package ledger.tagging
 
-import ledger.Label
-
 trait AccountLabel[T] {
   def label: Label
+  def naturalSide: Side = label.naturalSide
+  def naturalContraSide: Side = label.naturalContraSide
 }
 
 object AccountLabel {
