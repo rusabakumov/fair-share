@@ -1,6 +1,5 @@
 package story
 
-import ledger.{Entry, Money}
 import org.scalatest.{FunSpec, Matchers}
 
 class TransactionTest extends FunSpec with Matchers {

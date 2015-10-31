@@ -1,5 +1,3 @@
 package ledger
 
-import ledger.tagging.{Side, Label}
-
-case class AccountChangeRecord(side: Side, label: Label, amount: Money)
+case class AccountChangeRecord(side: Side, label: LabelledAccount, amount: Money)

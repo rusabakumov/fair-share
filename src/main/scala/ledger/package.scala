@@ -6,4 +6,5 @@ package object ledger {
 
     def apply(v: Double) = BigDecimal(v)
   }
+
 }
