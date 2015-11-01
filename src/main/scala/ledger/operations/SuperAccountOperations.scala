@@ -17,7 +17,19 @@ object SuperAccountOperations {
     pr <- increase(PayableAccount, amount)
   } yield cr :: pr :: Nil
 
+  def payback(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
+    pr <- decrease(PayableAccount, amount)
+    cr <- decrease(CashAccount, amount)
+  } yield pr :: cr :: Nil
+
+  def receive(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
+    cr <- increase(CashAccount, amount)
+    rr <- decrease(ReceivableAccount, amount)
+  } yield cr :: rr :: Nil
+
   def increase(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide, label, amount)
+
+  def decrease(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide.contra, label, amount)
 
   def op(side: Side, label: LabelledAccount, amount: Money): SuperAccountOp = State { sa =>
     label match {
@@ -38,20 +50,4 @@ object SuperAccountOperations {
         (sa.copy(goods = account), change)
     }
   }
-
-  def payback(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
-    pr <- decrease(PayableAccount, amount)
-    cr <- decrease(CashAccount, amount)
-  } yield pr :: cr :: Nil
-
-  def receive(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
-    cr <- increase(CashAccount, amount)
-    rr <- decrease(ReceivableAccount, amount)
-  } yield cr :: rr :: Nil
-
-  def decrease(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide.contra, label, amount)
-
-  def debit(label: LabelledAccount, amount: Money): SuperAccountOp = op(Debit, label, amount)
-
-  def credit(label: LabelledAccount, amount: Money): SuperAccountOp = op(Credit, label, amount)
 }
