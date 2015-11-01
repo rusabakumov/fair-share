@@ -17,36 +17,41 @@ object SuperAccountOperations {
     pr <- increase(PayableAccount, amount)
   } yield cr :: pr :: Nil
 
+  def increase(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide, label, amount)
+
+  def op(side: Side, label: LabelledAccount, amount: Money): SuperAccountOp = State { sa =>
+    label match {
+      case x @ CashAccount =>
+        val (account, change) = AccountOperations.op(x)(side, amount)(sa.cash)
+        (sa.copy(cash = account), change)
+
+      case x @ ReceivableAccount =>
+        val (account, change) = AccountOperations.op(x)(side, amount)(sa.receivable)
+        (sa.copy(receivable = account), change)
+
+      case x @ PayableAccount =>
+        val (account, change) = AccountOperations.op(x)(side, amount)(sa.payable)
+        (sa.copy(payable = account), change)
+
+      case x @ GoodsAccount =>
+        val (account, change) = AccountOperations.op(x)(side, amount)(sa.goods)
+        (sa.copy(goods = account), change)
+    }
+  }
+
   def payback(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
     pr <- decrease(PayableAccount, amount)
     cr <- decrease(CashAccount, amount)
   } yield pr :: cr :: Nil
-
 
   def receive(amount: Money): State[SuperAccount, List[AccountChangeRecord]] = for {
     cr <- increase(CashAccount, amount)
     rr <- decrease(ReceivableAccount, amount)
   } yield cr :: rr :: Nil
 
+  def decrease(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide.contra, label, amount)
+
   def debit(label: LabelledAccount, amount: Money): SuperAccountOp = op(Debit, label, amount)
 
   def credit(label: LabelledAccount, amount: Money): SuperAccountOp = op(Credit, label, amount)
-
-  def increase(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide, label, amount)
-
-  def decrease(label: LabelledAccount, amount: Money): SuperAccountOp = op(label.naturalSide.contra, label, amount)
-
-  def op(side: Side, label: LabelledAccount, amount: Money): SuperAccountOp = label match {
-    case x@CashAccount => adaptAccountOp(x, side, amount)(sa => sa.cash, (sa, a) => sa.copy(cash = a))
-    case x@ReceivableAccount => adaptAccountOp(x, side, amount)(sa => sa.receivable, (s, a) => s.copy(receivable = a))
-    case x@PayableAccount => adaptAccountOp(x, side, amount)(sa => sa.payable, (s, a) => s.copy(payable = a))
-    case x@GoodsAccount => adaptAccountOp(x, side, amount)(sa => sa.goods, (s, a) => s.copy(goods = a))
-  }
-
-  def adaptAccountOp[T <: LabelledAccount](label: T, side: Side, money: Money)(
-    f: SuperAccount => T#Account, g: (SuperAccount, T#Account) => SuperAccount
-    ): State[SuperAccount, AccountChangeRecord] = {
-    val op = AccountOperations.op(label)(side, money)
-    State.get[SuperAccount] flatMap { sa => op.xmap[SuperAccount, SuperAccount](a => g(sa, a))(f) }
-  }
 }
