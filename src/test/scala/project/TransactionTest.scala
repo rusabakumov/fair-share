@@ -1,4 +1,4 @@
-package story
+package project
 
 import org.scalatest.{FunSpec, Matchers}
 

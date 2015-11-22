@@ -1,4 +1,4 @@
-package ledger
+package account
 
 sealed trait Side {
   def contra: Side = this match {

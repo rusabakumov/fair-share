@@ -1,4 +1,4 @@
-package object ledger {
+package object account {
   type Money = BigDecimal
 
   object Money {

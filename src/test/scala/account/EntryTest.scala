@@ -1,4 +1,4 @@
-package ledger
+package account
 
 import org.scalatest.{FunSpec, Matchers}
 
