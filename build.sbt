@@ -1,3 +1,5 @@
+import scalariform.formatter.preferences._
+
 name := """fair-share"""
 
 version := "1.0-SNAPSHOT"
@@ -10,6 +12,12 @@ libraryDependencies ++= List(
   "org.scalaz" %% "scalaz-core" % "7.2.+",
   "org.scalaz" %% "scalaz-concurrent" % "7.2.+"
 )
+
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(PreserveDanglingCloseParenthesis, true)
 
 // Uncomment to use Akka
 //libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.11"
