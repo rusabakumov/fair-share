@@ -1,10 +1,7 @@
 package occasion
 
-import account.AccountBalanceChanged
-import participant.ParticipantId
+sealed trait OccasionEvent
 
-trait OccasionEvent extends Product with Serializable
+case class OccasionCreated(id: OccasionId) extends OccasionEvent
 
-case class OccasionDescriptionChanged(id: OccasionId, description: String) extends OccasionEvent
-
-case class OccasionLedgerChanged(id: OccasionId, ledgerChanges: Map[ParticipantId, List[AccountBalanceChanged]])
+case class OccasionDescriptionChanged(description: String) extends OccasionEvent

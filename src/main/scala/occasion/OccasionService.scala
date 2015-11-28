@@ -1,16 +1,19 @@
 package occasion
 
-import account.Money
-import participant.{ParticipantRepo, ParticipantId}
+import java.time.LocalDateTime
 
-import scalaz.{Reader, ValidationNel}
+import event.{ Event, Metadata }
 
-case class ConsumeInfo(paid: Money, consumed: Money)
+import scalaz.Reader
 
 trait OccasionService {
-  type V[T] = ValidationNel[String, T]
+  def changeDescription(id: OccasionId, newDescription: String): Reader[OccasionRepo, Boolean] = Reader { repo =>
+    val ev = Event(OccasionDescriptionChanged(newDescription), Metadata(LocalDateTime.now()))
+    repo.store(id, ev)
+  }
 
-  def run(events: List[OccasionEvent]): Occasion => Occasion = ???
-
-  def split(description: Map[ParticipantId, ConsumeInfo]): (OccasionRepo, ParticipantRepo) => V[OccasionLedgerChanged] = ???
+  def createOccasion(id: OccasionId): Reader[OccasionRepo, Boolean] = Reader { repo =>
+    val ev = Event(OccasionCreated(id), Metadata(LocalDateTime.now()))
+    repo.store(id, ev)
+  }
 }

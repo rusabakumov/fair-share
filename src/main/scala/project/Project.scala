@@ -1,14 +1,16 @@
 package project
 
-import participant.Participant
-import occasion.Occasion
+import java.util.UUID
 
-case class ProjectId(id: Int) extends AnyVal
+import occasion.OccasionId
+import participant.ParticipantId
+
+case class ProjectId(id: UUID) extends AnyVal
 
 case class Project(
-  id: ProjectId,
-  name: String,
-  characters: List[Participant],
-  occasions: List[Occasion]
+    id: ProjectId,
+    name: String,
+    characters: List[ParticipantId],
+    occasions: List[OccasionId]
 ) {
 }

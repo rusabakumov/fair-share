@@ -15,13 +15,6 @@ sealed trait LabelledBalance extends Product with Serializable {
       case Credit => credit(money)
     }
 
-    def zeroIn: AccountBalanceChanged = naturalSide match {
-      case Debit =>
-        if (balance > 0) AccountBalanceChanged(Credit, outer, balance) else AccountBalanceChanged(Debit, outer, balance)
-      case Credit =>
-        if (balance > 0) AccountBalanceChanged(Debit, outer, balance) else AccountBalanceChanged(Credit, outer, balance)
-    }
-
     private def debit(money: Money): Balance = naturalSide match {
       case Debit => copy(balance = balance + money)
       case Credit => copy(balance = balance - money)
@@ -43,8 +36,6 @@ sealed trait CreditBalance extends LabelledBalance {
 }
 
 case object CashBalance extends DebitBalance
-
-case object ReceivableBalance extends DebitBalance
 
 case object GoodsBalance extends DebitBalance
 
