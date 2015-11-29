@@ -1,28 +1,32 @@
 package occasion
 
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 
-import event.Event
+import event.{ Version, Event }
 import org.scalatest.{ FunSpec, Matchers }
+import repo.InteractionResult
+import scalaz._
+
+import scala.collection.mutable
 
 class OccasionServiceTest extends FunSpec with Matchers {
   object TestOccasionRepo extends OccasionRepo {
-    val store = new AtomicReference(Map[OccasionId, List[Event[OccasionEvent]]]())
+    val store = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
 
-    def get(id: OccasionId): Option[Occasion] = {
-      val maybeEvents = store.get().get(id)
+    def get(id: OccasionId): InteractionResult[Option[Occasion]] = {
+      val maybeEvents = store.get(id)
 
-      for {
+      val maybeOccasion = for {
         events <- maybeEvents
-      } yield Occasion.foldLeft(events.map(_.payload))
+      } yield Occasion.foldLeft(events)
+
+      \/.right(maybeOccasion)
     }
 
-    def store(id: OccasionId, ev: Event[OccasionEvent]): Boolean = {
-      val current = store.get()
-      val newEvents = current.getOrElse(id, Nil) :+ ev
-      store.set(current + (id -> newEvents))
-      true
+    def store(id: OccasionId, ev: Event[OccasionEvent]): InteractionResult[Unit] = store.synchronized {
+      val newEvents = store.getOrElse(id, Nil) :+ ev
+      store += (id -> newEvents)
+      \/.right(())
     }
   }
 
@@ -30,11 +34,10 @@ class OccasionServiceTest extends FunSpec with Matchers {
 
   describe("OccasionServiceTest") {
     it("should change description") {
-      val id = OccasionId(UUID.randomUUID())
-      TestOccasionService.createOccasion(id)(TestOccasionRepo)
-      TestOccasionService.changeDescription(id, "new description")(TestOccasionRepo)
+      val id = TestOccasionService.create()(TestOccasionRepo).toOption.get
+      TestOccasionService.changeDescription(id, Version(0), "new description")(TestOccasionRepo)
 
-      TestOccasionRepo.get(id).get.description shouldEqual Some("new description")
+      TestOccasionRepo.get(id).toOption.get.get.description shouldEqual Some("new description")
     }
 
   }
