@@ -6,6 +6,7 @@ import participant.{ Participant, ParticipantId, ParticipantRepo }
 import util._
 
 import scala.collection.mutable
+import scalaz.\/
 import scalaz.syntax.either._
 
 class OccasionServiceTest extends FunSpec with Matchers {
@@ -13,7 +14,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
   object TestOccasionRepo extends OccasionRepo {
     val inMemoryStore = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
 
-    def get(id: OccasionId): V[Option[Occasion]] = {
+    def get(id: OccasionId): Throwable \/ Option[Occasion] = {
       val maybeEvents = inMemoryStore.get(id)
 
       val maybeOccasion = for {
@@ -33,7 +34,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
   object TestParticipantRepo extends ParticipantRepo {
     val inMemoryStore = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
 
-    def get(id: ParticipantId): V[Option[Participant]] = {
+    def get(id: ParticipantId): Throwable \/ Option[Participant] = {
       id match {
         case x @ ParticipantId(1) => Some(Participant(x, "Fedor")).right
         case x @ ParticipantId(2) => Some(Participant(x, "Boris")).right

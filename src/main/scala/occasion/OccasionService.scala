@@ -3,8 +3,8 @@ package occasion
 import java.util.UUID
 
 import account.Money
-import event.{Event, Version}
-import participant.{ParticipantId, ParticipantRepo}
+import event.{ Event, Version }
+import participant.{ ParticipantId, ParticipantRepo }
 import util._
 
 import scalaz.Kleisli._
@@ -25,7 +25,6 @@ trait OccasionService {
     newDescription: String
   ): Reader[OccasionRepo, V[Unit]] = Reader { repo =>
     repo.get
-      .andThen(validatePresence)
       .andThen(validateVersion(version))
       .andThen(changeDescription(newDescription))
       .andThen(repo.store)
@@ -40,20 +39,15 @@ trait OccasionService {
     money: Money
   ): Reader[(OccasionRepo, ParticipantRepo), V[Unit]] = Reader {
     case (occasionRepo, participantRepo) =>
-      val fromParticipant = participantRepo.get.andThen(validatePresence).run(fromId)
-      val toParticipant = participantRepo.get.andThen(validatePresence).run(toId)
-      val occasion = occasionRepo.get.andThen(validatePresence).andThen(validateVersion(version)).run(id)
+      val fromParticipant = participantRepo.get.run(fromId)
+      val toParticipant = participantRepo.get.run(toId)
+      val occasion = occasionRepo.get.andThen(validateVersion(version)).run(id)
 
       for {
         from <- fromParticipant
         to <- toParticipant
         target <- occasion
       } yield occasionRepo.store(target.id, OccasionOps.mkMoneyTransfer(target, from, to, money))
-  }
-
-  def validatePresence[T] = Kleisli[V, Option[T], T] {
-    case None => "The specified occasion doesn't exist.".left[T]
-    case Some(x) => x.right
   }
 
   def validateVersion(version: Version) = Kleisli[V, Occasion, Occasion] { occasion =>
