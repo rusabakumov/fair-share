@@ -1,7 +1,13 @@
 package participant
 
-import scalaz.concurrent.Task
+import util._
+
+import scalaz.Kleisli
 
 trait ParticipantRepo {
-  def get(id: ParticipantId): Task[Participant] = ???
+  def get: Kleisli[V, ParticipantId, Option[Participant]] = Kleisli[V, ParticipantId, Option[Participant]] { id =>
+    get(id)
+  }
+
+  protected def get(id: ParticipantId): V[Option[Participant]]
 }
