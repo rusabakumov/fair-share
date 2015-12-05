@@ -1,32 +1,30 @@
 package occasion
 
-import java.util.UUID
-
-import event.{ Version, Event }
+import event.{ Event, Version }
 import org.scalatest.{ FunSpec, Matchers }
-import repo.InteractionResult
-import scalaz._
 
 import scala.collection.mutable
+import scalaz._
+import scalaz.syntax.either._
 
 class OccasionServiceTest extends FunSpec with Matchers {
   object TestOccasionRepo extends OccasionRepo {
-    val store = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
+    val inMemoryStore = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
 
-    def get(id: OccasionId): InteractionResult[Option[Occasion]] = {
-      val maybeEvents = store.get(id)
+    def get(id: OccasionId): String \/ Option[Occasion] = {
+      val maybeEvents = inMemoryStore.get(id)
 
       val maybeOccasion = for {
         events <- maybeEvents
       } yield Occasion.foldLeft(events)
 
-      \/.right(maybeOccasion)
+      maybeOccasion.right
     }
 
-    def store(id: OccasionId, ev: Event[OccasionEvent]): InteractionResult[Unit] = store.synchronized {
-      val newEvents = store.getOrElse(id, Nil) :+ ev
-      store += (id -> newEvents)
-      \/.right(())
+    def store(id: OccasionId, ev: Event[OccasionEvent]): String \/ Unit = inMemoryStore.synchronized {
+      val newEvents = inMemoryStore.getOrElse(id, Nil) :+ ev
+      inMemoryStore += (id -> newEvents)
+      ().right
     }
   }
 

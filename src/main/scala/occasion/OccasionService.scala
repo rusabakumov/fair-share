@@ -2,48 +2,45 @@ package occasion
 
 import java.util.UUID
 
-import event.{ Event, Metadata, Version }
+import event.{ Event, Version }
+import util._
 
 import scalaz._
+import scalaz.syntax.either._
 
 trait OccasionService {
-  type V[T] = ValidationNel[String, T]
-
   def changeDescription(
     id: OccasionId,
     version: Version,
     newDescription: String
   ): Reader[OccasionRepo, V[Unit]] = Reader { repo =>
-    val repoResult = repo.get(id)
+    repo.get
+      .andThen(validatePresence)
+      .andThen(validateVersion(version))
+      .andThen(changeDescription(newDescription))
+      .andThen(repo.store)
+      .run(id)
+  }
 
-    repoResult.fold(
-      e => Failure(NonEmptyList(e.toString)),
-      {
-        case Some(occasion) =>
-          if (version != occasion.version) Failure(NonEmptyList("You're working with an outdated occasion."))
-          else {
-            val payload = OccasionDescriptionChanged(newDescription)
-            val metadata = Metadata(occasion.version.next)
-            val event = Event(payload, metadata)
+  def validatePresence = Kleisli[V, Option[Occasion], Occasion] {
+    case None => "The specified occasion doesn't exist.".left[Occasion]
+    case Some(occasion) => occasion.right
+  }
 
-            repo.store(id, event).fold(
-              e => Failure(NonEmptyList(e.toString)),
-              _ => Success(())
-            )
-          }
-        case None => Failure(NonEmptyList("Occasion with such ID isn't found."))
-      }
-    )
+  def validateVersion(version: Version) = Kleisli[V, Occasion, Occasion] { occasion =>
+    if (version != occasion.version) "You're working with an outdated occasion.".left[Occasion]
+    else occasion.right
+  }
+
+  def changeDescription(newDescription: String) = Kleisli[V, Occasion, (OccasionId, Event[OccasionEvent])] { occasion =>
+    val event = OccasionOps.changeDescription(occasion, newDescription)
+    (occasion.id, event).right
   }
 
   def create(): Reader[OccasionRepo, V[OccasionId]] = Reader { repo =>
     val id = OccasionId(UUID.randomUUID())
-    val metadata = Metadata(Version.zero)
-    val event = Event(OccasionCreated(id), metadata)
+    val event = OccasionOps.create(id)
 
-    repo.store(id, event).fold(
-      e => Failure(NonEmptyList(e.toString)),
-      _ => Success(id)
-    )
+    repo.store.run(id, event).map(_ => id)
   }
 }

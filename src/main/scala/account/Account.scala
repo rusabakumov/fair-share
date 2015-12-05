@@ -22,7 +22,7 @@ case class Account(
     op(Debit, CashBalance, money)
       .op(Credit, PayableBalance, money)
 
-  def pay(check: Check): Account =
+  def pay(check: Bill): Account =
     op(Debit, GoodsBalance, check.spent)
       .op(Credit, CashBalance, check.paid)
       .op(Credit, PayableBalance, check.spent - check.paid)
