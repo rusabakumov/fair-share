@@ -2,7 +2,7 @@ package repos
 
 import event.Event
 import occasion.{Occasion, OccasionEvent, OccasionId}
-import participant.{Participant, ParticipantId}
+import participant.{Participant, ParticipantEvent, ParticipantId}
 import util._
 
 import scalaz.std.java.throwable._
@@ -40,10 +40,10 @@ trait ParticipantRepo extends Repo {
     id => validate(get(id))
   }
 
-  def store: Kleisli[V, (ParticipantId, String), Unit] = Kleisli[V, (ParticipantId, String), Unit] {
+  def store: Kleisli[V, (ParticipantId, ParticipantEvent), Unit] = Kleisli[V, (ParticipantId, ParticipantEvent), Unit] {
     case (id, name) => store(id, name)
   }
 
   protected def get(id: ParticipantId): Throwable \/ Option[Participant]
-  protected def store(id: ParticipantId, name: String): V[Unit]
+  protected def store(id: ParticipantId, ev: ParticipantEvent): V[Unit]
 }
