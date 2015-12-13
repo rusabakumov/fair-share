@@ -3,8 +3,9 @@ package occasion
 import java.util.UUID
 
 import account.Money
-import event.{ Event, Version }
-import participant.{ ParticipantId, ParticipantRepo }
+import event.{Event, Version}
+import participant.ParticipantId
+import repos.{OccasionRepo, ParticipantRepo}
 import util._
 
 import scalaz.Kleisli._

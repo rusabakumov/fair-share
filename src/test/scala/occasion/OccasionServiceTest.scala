@@ -1,8 +1,9 @@
 package occasion
 
-import event.{ Event, Version }
-import org.scalatest.{ FunSpec, Matchers }
-import participant.{ Participant, ParticipantId, ParticipantRepo }
+import event.{Event, Version}
+import org.scalatest.{FunSpec, Matchers}
+import participant.{Participant, ParticipantId}
+import repos.{OccasionRepo, ParticipantRepo}
 import util._
 
 import scala.collection.mutable
@@ -41,6 +42,10 @@ class OccasionServiceTest extends FunSpec with Matchers {
         case _ => None.right
       }
     }
+
+    def store(id: ParticipantId, name: String): V[Unit] = inMemoryStore.synchronized {
+      ().right
+    }
   }
 
   object TestOccasionService extends OccasionService
@@ -72,6 +77,26 @@ class OccasionServiceTest extends FunSpec with Matchers {
       toAccount.goods.balance shouldEqual 0
     }
 
-    //TODO: check sad path of make a transfer
+    it("should decline a transfer") {
+      val id = TestOccasionService.create()(TestOccasionRepo).toOption.get
+
+      // correct transfer
+      TestOccasionService.transfer(id, Version(0), ParticipantId(2), ParticipantId(1), 22)(TestOccasionRepo, TestParticipantRepo)
+      // transfer to not existing Participant
+      TestOccasionService.transfer(id, Version(0), ParticipantId(1), ParticipantId(3), 2000)(TestOccasionRepo, TestParticipantRepo)
+
+      val accounts = TestOccasionRepo.get(id).toOption.get.get.accounts
+
+      val fromAccount = accounts(ParticipantId(2))
+      val toAccount = accounts(ParticipantId(1))
+
+      fromAccount.cash.balance shouldEqual -22
+      fromAccount.payable.balance shouldEqual -22
+      fromAccount.goods.balance shouldEqual 0
+
+      toAccount.cash.balance shouldEqual 22
+      toAccount.payable.balance shouldEqual 22
+      toAccount.goods.balance shouldEqual 0
+    }
   }
 }
