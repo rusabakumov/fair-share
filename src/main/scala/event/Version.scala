@@ -5,6 +5,7 @@ case class Version(v: Int) extends AnyVal with Ordered[Version] {
 
   def next: Version = copy(v + 1)
 }
+
 object Version {
   def zero: Version = Version(0)
 }

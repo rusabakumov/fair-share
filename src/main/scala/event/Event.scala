@@ -1,3 +1,3 @@
 package event
 
-case class Event[+T](payload: T, metadata: Metadata)
+case class Event[T](payload: Payload[T], metadata: Metadata)

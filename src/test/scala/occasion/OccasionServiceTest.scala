@@ -2,10 +2,9 @@ package occasion
 
 import java.util.UUID
 
-import event.{Event, Version}
-import org.scalatest.{FunSpec, Matchers}
-import participant.{Participant, ParticipantEvent, ParticipantId, ParticipantService}
-import repos.{OccasionRepo, ParticipantRepo}
+import event.{ Event, Version }
+import org.scalatest.{ FunSpec, Matchers }
+import participant._
 import util._
 
 import scala.collection.mutable
@@ -15,7 +14,7 @@ import scalaz.syntax.either._
 class OccasionServiceTest extends FunSpec with Matchers {
 
   object TestOccasionRepo extends OccasionRepo {
-    val inMemoryStore = mutable.Map[OccasionId, List[Event[OccasionEvent]]]()
+    val inMemoryStore = mutable.Map[OccasionId, List[Event[Occasion]]]()
 
     def get(id: OccasionId): Throwable \/ Option[Occasion] = {
       val maybeEvents = inMemoryStore.get(id)
@@ -27,7 +26,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
       maybeOccasion.right
     }
 
-    def store(id: OccasionId, ev: Event[OccasionEvent]): V[Unit] = inMemoryStore.synchronized {
+    def store(id: OccasionId, ev: Event[Occasion]): Throwable \/ Unit = inMemoryStore.synchronized {
       val newEvents = inMemoryStore.getOrElse(id, Nil) :+ ev
       inMemoryStore += (id -> newEvents)
       ().right
@@ -35,7 +34,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
   }
 
   object TestParticipantRepo extends ParticipantRepo {
-    val inMemoryStore = mutable.Map[ParticipantId, List[ParticipantEvent]]()
+    val inMemoryStore = mutable.Map[ParticipantId, List[Event[Participant]]]()
 
     def get(id: ParticipantId): Throwable \/ Option[Participant] = {
       val maybeEvents = inMemoryStore.get(id)
@@ -47,7 +46,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
       maybeParticipant.right
     }
 
-    def store(id: ParticipantId, ev: ParticipantEvent): V[Unit] = inMemoryStore.synchronized {
+    def store(id: ParticipantId, ev: Event[Participant]): Throwable \/ Unit = inMemoryStore.synchronized {
       val newEvents = inMemoryStore.getOrElse(id, Nil) :+ ev
       inMemoryStore += (id -> newEvents)
       ().right
@@ -55,6 +54,7 @@ class OccasionServiceTest extends FunSpec with Matchers {
   }
 
   object TestOccasionService extends OccasionService
+
   object TestParticipantService extends ParticipantService
 
   describe("OccasionServiceTest") {
@@ -70,7 +70,9 @@ class OccasionServiceTest extends FunSpec with Matchers {
       val participantId1 = TestParticipantService.create("Boris")(TestParticipantRepo).toOption.get
       val participantId2 = TestParticipantService.create("Artem")(TestParticipantRepo).toOption.get
 
-      TestOccasionService.transfer(id, Version(0), participantId1, participantId2, 777)(TestOccasionRepo, TestParticipantRepo)
+      TestOccasionService.transfer(id, Version(0), participantId1, participantId2, 777)(
+        TestOccasionRepo, TestParticipantRepo
+      )
 
       val accounts = TestOccasionRepo.get(id).toOption.get.get.accounts
 
@@ -92,9 +94,13 @@ class OccasionServiceTest extends FunSpec with Matchers {
       val participantId2 = TestParticipantService.create("Artem")(TestParticipantRepo).toOption.get
 
       // correct transfer
-      TestOccasionService.transfer(id, Version(0), participantId2, participantId1, 22)(TestOccasionRepo, TestParticipantRepo)
+      TestOccasionService.transfer(id, Version(0), participantId2, participantId1, 22)(
+        TestOccasionRepo, TestParticipantRepo
+      )
       // transfer to not existing Participant
-      TestOccasionService.transfer(id, Version(0), participantId2, ParticipantId(UUID.randomUUID()), 2000)(TestOccasionRepo, TestParticipantRepo)
+      TestOccasionService.transfer(id, Version(0), participantId2, ParticipantId(UUID.randomUUID()), 2000)(
+        TestOccasionRepo, TestParticipantRepo
+      )
 
       val accounts = TestOccasionRepo.get(id).toOption.get.get.accounts
 

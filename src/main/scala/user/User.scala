@@ -1,5 +1,5 @@
 package user
 
-case class UserId(id: Int) extends AnyVal
+import util._
 
 case class User(id: UserId, name: String)

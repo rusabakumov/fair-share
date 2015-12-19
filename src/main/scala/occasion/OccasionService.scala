@@ -3,12 +3,11 @@ package occasion
 import java.util.UUID
 
 import account.Money
-import event.{Event, Version}
-import participant.ParticipantId
-import repos.{OccasionRepo, ParticipantRepo}
+import event.{ Event, Version }
+import participant.ParticipantRepo
 import util._
+import util.syntax.repo._
 
-import scalaz.Kleisli._
 import scalaz._
 import scalaz.syntax.either._
 
@@ -17,7 +16,7 @@ trait OccasionService {
     val id = OccasionId(UUID.randomUUID())
     val event = OccasionOps.create(id)
 
-    repo.store.run(id, event).map(_ => id)
+    repo.storeV(id, event).map(_ => id)
   }
 
   def changeDescription(
@@ -25,10 +24,10 @@ trait OccasionService {
     version: Version,
     newDescription: String
   ): Reader[OccasionRepo, V[Unit]] = Reader { repo =>
-    repo.get
+    repo.getK
       .andThen(validateVersion(version))
       .andThen(changeDescription(newDescription))
-      .andThen(repo.store)
+      .andThen(repo.storeK)
       .run(id)
   }
 
@@ -40,15 +39,15 @@ trait OccasionService {
     money: Money
   ): Reader[(OccasionRepo, ParticipantRepo), V[Unit]] = Reader {
     case (occasionRepo, participantRepo) =>
-      val fromParticipant = participantRepo.get.run(fromId)
-      val toParticipant = participantRepo.get.run(toId)
-      val occasion = occasionRepo.get.andThen(validateVersion(version)).run(id)
+      val fromParticipant = participantRepo.getV(fromId)
+      val toParticipant = participantRepo.getV(toId)
+      val occasion = occasionRepo.getK.andThen(validateVersion(version)).run(id)
 
       for {
         from <- fromParticipant
         to <- toParticipant
         target <- occasion
-      } yield occasionRepo.store(target.id, OccasionOps.mkMoneyTransfer(target, from, to, money))
+      } yield occasionRepo.storeV(target.id, OccasionOps.mkMoneyTransfer(target, from, to, money))
   }
 
   def validateVersion(version: Version) = Kleisli[V, Occasion, Occasion] { occasion =>
@@ -56,9 +55,8 @@ trait OccasionService {
     else occasion.right
   }
 
-  def changeDescription(newDescription: String) = Kleisli[V, Occasion, (OccasionId, Event[OccasionEvent])] { occasion =>
+  def changeDescription(newDescription: String) = Kleisli[V, Occasion, (Id[Occasion], Event[Occasion])] { occasion =>
     val event = OccasionOps.changeDescription(occasion, newDescription)
     (occasion.id, event).right
   }
-
 }
