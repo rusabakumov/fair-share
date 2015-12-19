@@ -14,7 +14,7 @@ import scalaz.syntax.either._
 trait OccasionService {
   def create(): Reader[OccasionRepo, V[OccasionId]] = Reader { repo =>
     val id = OccasionId(UUID.randomUUID())
-    val event = OccasionOps.create(id)
+    val event = OccasionCommandHandler.create(id)
 
     repo.storeV(id, event).map(_ => id)
   }
@@ -47,7 +47,7 @@ trait OccasionService {
         from <- fromParticipant
         to <- toParticipant
         target <- occasion
-      } yield occasionRepo.storeV(target.id, OccasionOps.mkMoneyTransfer(target, from, to, money))
+      } yield occasionRepo.storeV(target.id, OccasionCommandHandler.mkMoneyTransfer(target, from, to, money))
   }
 
   def validateVersion(version: Version) = Kleisli[V, Occasion, Occasion] { occasion =>
@@ -55,8 +55,8 @@ trait OccasionService {
     else occasion.right
   }
 
-  def changeDescription(newDescription: String) = Kleisli[V, Occasion, (Id[Occasion], Event[Occasion])] { occasion =>
-    val event = OccasionOps.changeDescription(occasion, newDescription)
+  def changeDescription(newDescription: String) = Kleisli[V, Occasion, (OccasionId, Event[Occasion])] { occasion =>
+    val event = OccasionCommandHandler.changeDescription(occasion, newDescription)
     (occasion.id, event).right
   }
 }

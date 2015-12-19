@@ -2,14 +2,18 @@ package participant
 
 import java.util.UUID
 
-import event.Event
+import event.{ Version, Event }
 import participant.ParticipantPayload.{ Created, NameChanged }
 import util._
 
-case class Participant(id: ParticipantId, name: String)
+case class Participant(
+  id: ParticipantId,
+  name: String,
+  version: Version
+)
 
 object Participant {
-  def empty = Participant(ParticipantId(UUID.randomUUID()), "New participant")
+  def empty = Participant(ParticipantId(UUID.randomUUID()), "No Name", Version.zero)
 
   def foldLeft(events: List[Event[Participant]]): Participant = {
     events.foldLeft(Participant.empty) {

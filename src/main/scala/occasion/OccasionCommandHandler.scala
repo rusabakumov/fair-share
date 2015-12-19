@@ -6,7 +6,7 @@ import occasion.OccasionPayload._
 import participant.Participant
 import util._
 
-object OccasionOps {
+object OccasionCommandHandler {
   def create(id: OccasionId): Event[Occasion] = {
     val metadata = Metadata(Version.zero)
 
