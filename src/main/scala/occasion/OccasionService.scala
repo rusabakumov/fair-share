@@ -47,7 +47,7 @@ trait OccasionService {
         from <- fromParticipant
         to <- toParticipant
         target <- occasion
-      } yield occasionRepo.storeV(target.id, OccasionCommandHandler.mkMoneyTransfer(target, from, to, money))
+      } yield occasionRepo.storeV(target.id, OccasionCommandHandler.mkTransfer(target, from, to, money))
   }
 
   def validateVersion(version: Version) = Kleisli[V, Occasion, Occasion] { occasion =>

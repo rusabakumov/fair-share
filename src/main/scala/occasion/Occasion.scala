@@ -3,7 +3,7 @@ package occasion
 import java.util.UUID
 
 import account.Account
-import event.{ Event, Version }
+import event.{ EventHandler, Version }
 import util._
 
 case class Occasion(
@@ -14,33 +14,8 @@ case class Occasion(
 )
 
 object Occasion {
-  def empty = Occasion(OccasionId(UUID.randomUUID()), Version.zero, None, Map())
+  implicit def empty: Empty[Occasion] = Empty(Occasion(OccasionId(UUID.randomUUID()), Version.zero, None, Map()))
 
-  def foldLeft(events: List[Event[Occasion]]): Occasion = {
-    events.foldLeft(Occasion.empty) {
-      case (occasion, Event(payload, metadata)) =>
-        import OccasionPayload._
+  implicit val eventHandler: EventHandler[Occasion] = new OccasionEventHandler
 
-        payload match {
-          case Created(id) => occasion.copy(id = id, version = metadata.version)
-          case DescriptionChanged(id, description) => occasion.copy(description = Some(description), version = metadata.version)
-          case AccChangedToTransfer(id, from, to, money) =>
-            val fromAccount = Account.empty.give(money)
-            val toAccount = Account.empty.receive(money)
-            val newAccounts = Map(
-              from.id -> fromAccount,
-              to.id -> toAccount
-            )
-
-            occasion.copy(accounts = newAccounts)
-          case AccChangedToSplit(id, split) =>
-            val newAccounts = split.map {
-              case (participant, bill) =>
-                participant.id -> Account.empty.pay(bill)
-            }
-
-            occasion.copy(accounts = newAccounts)
-        }
-    }
-  }
 }

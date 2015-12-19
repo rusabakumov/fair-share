@@ -20,7 +20,7 @@ object OccasionCommandHandler {
     Event(payload, metadata)
   }
 
-  def mkMoneyTransfer(occasion: Occasion, from: Participant, to: Participant, money: Money): Event[Occasion] = {
+  def mkTransfer(occasion: Occasion, from: Participant, to: Participant, money: Money): Event[Occasion] = {
     val payload = AccChangedToTransfer(occasion.id, from, to, money)
     val metadata = Metadata(occasion.version.next)
 
