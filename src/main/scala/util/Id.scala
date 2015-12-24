@@ -2,8 +2,6 @@ package util
 
 import java.util.UUID
 
-import occasion.Occasion
-
 trait Id[+T] {
   def id: UUID
 }

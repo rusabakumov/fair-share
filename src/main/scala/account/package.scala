@@ -6,6 +6,4 @@ package object account {
 
     def apply(v: Double) = BigDecimal(v)
   }
-
-  case class Bill(spent: Money, paid: Money)
 }
