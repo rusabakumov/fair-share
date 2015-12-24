@@ -14,8 +14,9 @@ case class Occasion(
 )
 
 object Occasion {
-  implicit def empty: Empty[Occasion] = Empty(Occasion(OccasionId(UUID.randomUUID()), Version.zero, None, Map()))
+  def blank: Occasion = Occasion(OccasionId(UUID.randomUUID()), Version.zero, None, Map())
+
+  implicit val agg: Aggregate[Occasion] = Aggregate.build("Occasion", blank, _.id)
 
   implicit val eventHandler: EventHandler[Occasion] = new OccasionEventHandler
-
 }

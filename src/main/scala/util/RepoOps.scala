@@ -7,9 +7,9 @@ import scalaz.Kleisli._
 import scalaz.syntax.either._
 
 trait RepoOps {
-  implicit def repoToRichRepo[T: NamedAggregate](repo: Repo[T]): RichRepo[T] = RichRepo(repo)
+  implicit def repoToRichRepo[T: Aggregate](repo: Repo[T]): RichRepo[T] = RichRepo(repo)
 
-  case class RichRepo[T: NamedAggregate](repo: Repo[T]) {
+  case class RichRepo[T: Aggregate](repo: Repo[T]) {
     def getK: Kleisli[V, Id[T], T] = kleisli[V, Id[T], T](getV)
 
     def storeK: Kleisli[V, (Id[T], Event[T]), Unit] = kleisli[V, (Id[T], Event[T]), Unit](storeV.tupled)

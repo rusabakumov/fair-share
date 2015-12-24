@@ -12,7 +12,9 @@ case class Project(
 )
 
 object Project {
-  implicit def empty: Empty[Project] = Empty(Project(ProjectId(UUID.randomUUID()), "", Version.zero))
+  def blank: Project = Project(ProjectId(UUID.randomUUID()), "", Version.zero)
+
+  implicit val agg: Aggregate[Project] = Aggregate.build("Project", blank, _.id)
 
   implicit val eventHandler: EventHandler[Project] = new ProjectEventHandler
 }

@@ -12,7 +12,9 @@ case class Participant(
 )
 
 object Participant {
-  implicit def empty: Empty[Participant] = Empty(Participant(ParticipantId(UUID.randomUUID()), "No Name", Version.zero))
+  def blank: Participant = Participant(ParticipantId(UUID.randomUUID()), "No Name", Version.zero)
+
+  implicit val agg: Aggregate[Participant] = Aggregate.build("Participant", blank, _.id)
 
   implicit val eventHandler: EventHandler[Participant] = new ParticipantEventHandler
 }

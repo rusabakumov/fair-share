@@ -3,7 +3,6 @@ package util
 import occasion.Occasion
 import participant.Participant
 import project.Project
-import user.User
 
 trait Ids {
   type OccasionId = Id[Occasion]
@@ -14,7 +13,4 @@ trait Ids {
 
   type ProjectId = Id[Project]
   val ProjectId = Id.apply[Project] _
-
-  type UserId = Id[User]
-  val UserId = Id.apply[User] _
 }

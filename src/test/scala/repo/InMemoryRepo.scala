@@ -1,13 +1,13 @@
 package repo
 
 import event.{ Event, EventHandler }
-import util.{ Empty, Id, Repo }
+import util._
 
 import scala.collection.mutable
 import scalaz.\/
 import scalaz.syntax.either._
 
-class InMemoryRepo[T](implicit empty: Empty[T], eventHandler: EventHandler[T]) extends Repo[T] {
+class InMemoryRepo[T](implicit agg: Aggregate[T], eventHandler: EventHandler[T]) extends Repo[T] {
   val inMemoryStore = mutable.Map[Id[T], List[Event[T]]]()
 
   def get(id: Id[T]): Throwable \/ Option[T] = {
@@ -28,5 +28,5 @@ class InMemoryRepo[T](implicit empty: Empty[T], eventHandler: EventHandler[T]) e
 }
 
 object InMemoryRepo {
-  def apply[T](implicit empty: Empty[T], eventHandler: EventHandler[T]): InMemoryRepo[T] = new InMemoryRepo[T]
+  def apply[T](implicit agg: Aggregate[T], eventHandler: EventHandler[T]): InMemoryRepo[T] = new InMemoryRepo[T]
 }

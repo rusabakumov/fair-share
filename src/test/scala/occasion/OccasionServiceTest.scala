@@ -6,10 +6,11 @@ import account.Account
 import event.Version
 import org.scalatest.{ FunSpec, Matchers }
 import participant._
-import repo.{ InMemoryRepo, PrefilledInMemoryRepo }
+import repo.PrefilledInMemoryRepo
 import util._
+import util.syntax.repo._
 
-import scalaz.{ \/-, -\/ }
+import scalaz.{ -\/, \/- }
 
 class OccasionServiceTest extends FunSpec with Matchers {
 
@@ -19,20 +20,20 @@ class OccasionServiceTest extends FunSpec with Matchers {
 
   describe("OccasionServiceTest") {
     it("should change description") {
-      val repo = InMemoryRepo[Occasion]
-      val id = TestOccasionService.create()(repo).toOption.get
-      TestOccasionService.changeDescription(id, Version(0), "new description")(repo)
+      val occasion = Occasion.blank
+      val repo = PrefilledInMemoryRepo(occasion)
+      TestOccasionService.changeDescription(occasion.id, Version(0), "new description")(repo)
 
-      repo.get(id).toOption.get.get.description shouldEqual Some("new description")
+      repo.getV(occasion.id).map(_.description) shouldEqual \/-(Some("new description"))
     }
 
     describe("transfer") {
-      val occasion = Occasion.empty.empty
-      val boris = Participant.empty.empty.copy(name = "Boris")
-      val artem = Participant.empty.empty.copy(name = "Artem")
+      val occasion = Occasion.blank
+      val boris = Participant.blank.copy(name = "Boris")
+      val artem = Participant.blank.copy(name = "Artem")
 
-      val occasionRepo = PrefilledInMemoryRepo(occasion.id -> occasion)
-      val participantRepo = PrefilledInMemoryRepo(boris.id -> boris, artem.id -> artem)
+      val occasionRepo = PrefilledInMemoryRepo(occasion)
+      val participantRepo = PrefilledInMemoryRepo(boris, artem)
 
       it("should make a transfer") {
         val result = TestOccasionService.transfer(occasion.id, occasion.version, boris.id, artem.id, 777)(

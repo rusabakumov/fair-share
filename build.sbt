@@ -19,6 +19,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
-// Uncomment to use Akka
-//libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.11"
+val formatCode = taskKey[Unit]("Format all code")
 
+formatCode := {
+  ScalariformKeys.format.in(Compile).value
+  ScalariformKeys.format.in(Test).value
+}
