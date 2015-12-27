@@ -1,20 +1,33 @@
 package project
 
-import java.util.UUID
-
-import event.{ EventHandler, Version }
+import aggregate._
+import monocle.macros.GenLens
 import util._
 
 case class Project(
   id: ProjectId,
   name: String,
-  version: Version
+  status: ProjectStatus,
+  version: Version,
+  uncommittedEvents: Vector[EventXor[Project, ProjectCreated, ProjectChanged]] = Vector.empty
 )
 
-object Project {
-  def blank: Project = Project(ProjectId(UUID.randomUUID()), "", Version.zero)
+sealed trait ProjectStatus extends Product with Serializable
 
-  implicit val agg: Aggregate[Project] = Aggregate.build("Project", blank, _.id)
+object ProjectStatus {
 
-  implicit val eventHandler: EventHandler[Project] = new ProjectEventHandler
+  case object Open extends ProjectStatus
+
+  case object Removed extends ProjectStatus
+
+  case object Finished extends ProjectStatus
+
+}
+
+object Project extends Handlers {
+  implicit val agg: Aggregate[Project] = Aggregate(GenLens[Project](_.id), GenLens[Project](_.version), "project")
+
+  implicit val es: EventSourced[Project, ProjectCreated, ProjectChanged] = EventSourced(
+    GenLens[Project](_.uncommittedEvents)
+  )
 }

@@ -1,5 +1,7 @@
 import scalariform.formatter.preferences._
 
+import Dependencies._
+
 name := """fair-share"""
 
 version := "1.0-SNAPSHOT"
@@ -25,10 +27,8 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= List(
-  "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-  "org.scalaz" %% "scalaz-core" % "7.2.+",
-  "org.scalaz" %% "scalaz-concurrent" % "7.2.+"
-)
+  scalazDeps, monocleDeps, scalatestDeps
+).flatten
 
 scalariformSettings
 

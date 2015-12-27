@@ -1,7 +1,5 @@
-import scalaz.\/
+case class A(a: Int)
 
-val f: Int => Int = a => a + 1
+classOf[A].getSimpleName
 
-f(5)
-
-\/.right.toValidationNel
+classOf[Int].getSimpleName

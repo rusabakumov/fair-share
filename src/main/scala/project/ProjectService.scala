@@ -1,39 +1,45 @@
 package project
 
-import java.util.UUID
-
-import event.{ Event, Version }
+import aggregate.Version
+import repo.AggregateRepo.syntax._
+import util.Validation._
 import util._
-import util.syntax.repo._
-import scalaz.syntax.either._
 
-import scalaz.{ Kleisli, Reader }
+import scalaz.syntax.either._
+import scalaz.{ Reader, \/ }
 
 object ProjectService {
-  def create(): Reader[ProjectRepo, V[ProjectId]] = Reader { repo =>
-    val id = ProjectId(UUID.randomUUID())
+  import validation._
 
-    repo.storeV(id, ProjectCommandHandler.create(id)).map(_ => id)
+  def create(id: ProjectId, name: String): Reader[ProjectRepo, Valid[Unit]] = Reader { repo =>
+    repo.getV(id).swap.fold(
+      _ => s"Project with id = $id already exists.".left,
+      _ => for {
+        name <- validateName(name)
+        toRepo <- repo.storeV(Commands.create(id, name))
+      } yield toRepo
+    )
   }
 
-  def changeName(
-    id: ProjectId,
-    version: Version,
-    aName: String
-  ): Reader[ProjectRepo, V[Unit]] = Reader { repo =>
-    repo.getK
-      .andThen(validateVersion(version))
-      .andThen(changeName(aName))
-      .andThen(repo.storeK)
-      .run(id)
+  def changeName(id: ProjectId, version: Version, name: String): Reader[ProjectRepo, Valid[Unit]] = Reader { repo =>
+    for {
+      project <- repo.getV(id).flatMap(validateVersion(version))
+      name <- validateName(name)
+      toRepo <- repo.storeV(Commands.changeName(project, name))
+    } yield toRepo
   }
 
-  def validateVersion(version: Version) = Kleisli[V, Project, Project] { project =>
-    if (version != project.version) "You're working with an outdated project.".left[Project]
-    else project.right
-  }
+  object validation {
+    def validateName(name: String): Valid[String] = if (name.length > 0) {
+      name.right
+    } else {
+      "Name shouldn't be empty".left
+    }
 
-  def changeName(aName: String) = Kleisli[V, Project, (ProjectId, Event[Project])] { project =>
-    (project.id, ProjectCommandHandler.changeName(project, aName)).right
+    def validateStatus(oldStatus: ProjectStatus, newStatus: ProjectStatus): String \/ ProjectStatus = {
+      import ProjectStatus._
+      val validTransitions = List(Open -> ProjectStatus.Finished, Open -> Removed, Removed -> Open, Finished -> Open)
+      if (validTransitions.contains(oldStatus -> newStatus)) newStatus.right else s"Cannot transition to specified status".left
+    }
   }
 }
